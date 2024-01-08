@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Book</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #1a1a2e; /* Bluish black background color */
+            color: #fff;
+        }
+        .recipe-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .recipe-card {
+            width: 70%;
+            padding: 30px;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            background-color: #fff;
+            color: #1a1a2e;
+            position: relative;
+        }
+        .recipe-title {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: #1a1a2e;
+        }
+        .recipe-content {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #1a1a2e;
+            max-height: 200px;
+            overflow: hidden;
+            white-space: pre-line;
+        }
+        .recipe-buttons {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            align-items: flex-end;
+        }
+        button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .nav-buttons button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .nav-buttons button:hover {
+            background-color: #45a049;
+        }
+        .recipe-edit-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .recipe-edit-buttons button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .recipe-edit-buttons button:hover {
+            background-color: #45a049;
+        }
+        form {
+            display: none;
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1a1a2e;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .read-more-button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .read-more-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="recipe-container">
+    <div class="recipe-card" id="recipeCard">
+        <div class="recipe-buttons">
+            <button onclick="printRecipe()">Print</button>
+            <button onclick="downloadRecipe()">Download</button>
+        </div>
+        <h2 class="recipe-title">Recipe Title</h2>
+        <div class="recipe-content" id="recipeContent">
+            <p>This is a sample recipe. Replace this with your actual recipe content.</p>
+        </div>
+        <div class="recipe-edit-buttons">
+            <button onclick="addRecipe()">Add Recipe</button>
+            <button onclick="editRecipe()">Edit Recipe</button>
+        </div>
+        <div class="nav-buttons">
+            <button onclick="prevRecipe()">&#9664; Previous</button>
+            <button onclick="nextRecipe()">Next &#9654;</button>
+        </div>
+        <form id="recipeForm" style="display: none;">
+            <label for="recipeTitle">Recipe Title:</label>
+            <input type="text" id="recipeTitle" name="recipeTitle" required>
+
+            <label for="recipeContentInput">Recipe Content:</label>
+            <textarea id="recipeContentInput" name="recipeContent" rows="8" required></textarea>
+
+            <button type="button" onclick="saveRecipe()">Save Recipe</button>
+        </form>
+        <button class="read-more-button" onclick="toggleReadMore()">Read More</button>
+    </div>
+</div>
+
+<script>
+    const recipes = JSON.parse(localStorage.getItem('recipes')) || [
+        {
+            title: "Pasta Carbonara",
+            content: "Ingredients:\n- Pasta\n- Eggs\n- Cheese\n- Bacon\n\nInstructions:\n1. Cook the pasta...\n2. Mix eggs, cheese, and bacon..."
+        },
+        {
+            title: "Chocolate Cake",
+            content: "Ingredients:\n- Flour\n- Sugar\n- Cocoa powder\n- Eggs\n\nInstructions:\n1. Mix flour, sugar, and cocoa powder...\n2. Add eggs and mix..."
+        }
+        // Add more recipes as needed
+    ];
+
+    let currentRecipeIndex = 0;
+    const recipeCard = document.getElementById('recipeCard');
+    const recipeContent = document.getElementById('recipeContent');
+    const recipeForm = document.getElementById('recipeForm');
+    const recipeContentInput = document.getElementById('recipeContentInput');
+
+    function displayRecipe(index) {
+        const recipe = recipes[index];
+        recipeCard.querySelector('.recipe-title').textContent = recipe.title;
+        recipeContent.innerHTML = `<p>${recipe.content}</p>`;
+        recipeContentInput.value = recipe.content;
+    }
+
+    function printRecipe() {
+        window.print();
+    }
+
+    function downloadRecipe() {
+        const recipe = recipes[currentRecipeIndex];
+        const blob = new Blob([`# ${recipe.title}\n\n${recipe.content}`], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${recipe.title.replace(/\s+/g, '_').toLowerCase()}_recipe.txt`;
+        link.click();
+    }
+
+    function addRecipe() {
+        currentRecipeIndex = recipes.length;
+        showRecipeForm();
+    }
+
+    function editRecipe() {
+        showRecipeForm();
+    }
+
+    function prevRecipe() {
+        currentRecipeIndex = (currentRecipeIndex - 1 + recipes.length) % recipes.length;
+        displayRecipe(currentRecipeIndex);
+    }
+
+    function nextRecipe() {
+        currentRecipeIndex = (currentRecipeIndex + 1) % recipes.length;
+        displayRecipe(currentRecipeIndex);
+    }
+
+    function showRecipeForm() {
+        recipeForm.style.display = 'block';
+        recipeForm.querySelector('#recipeTitle').value = recipes[currentRecipeIndex]?.title || '';
+        recipeForm.querySelector('#recipeContentInput').value = recipes[currentRecipeIndex]?.content || '';
+    }
+
+    function saveRecipe() {
+        const title = recipeForm.querySelector('#recipeTitle').value;
+        const content = recipeForm.querySelector('#recipeContentInput').value;
+
+        if (title && content) {
+            if (currentRecipeIndex < recipes.length) {
+                // Editing existing recipe
+                recipes[currentRecipeIndex].title = title;
+                recipes[currentRecipeIndex].content = content;
+            } else {
+                // Adding a new recipe
+                recipes.push({ title, content });
+                currentRecipeIndex = recipes.length - 1;
+            }
+
+            displayRecipe(currentRecipeIndex);
+            recipeForm.style.display = 'none';
+            localStorage.setItem('recipes', JSON.stringify(recipes));
+        } else {
+            alert('Please enter both title and content.');
+        }
+    }
+
+    function toggleReadMore() {
+        const maxHeight = recipeContent.style.maxHeight;
+        if (maxHeight === 'none' || maxHeight === '') {
+            recipeContent.style.maxHeight = '200px';
+        } else {
+            recipeContent.style.maxHeight = 'none';
+        }
+    }
+
+    // Load the initial recipe on page load
+    displayRecipe(currentRecipeIndex);
+</script>
+
+</body>
+</html>
